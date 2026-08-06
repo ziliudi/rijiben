@@ -2,16 +2,22 @@ let quill = null;
 let currentPostId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 自定义字体配置（名称必须与 CSS 类中的后缀一致）
-  const fontList = ['NotoSerifSC', 'Roboto', 'OpenSans'];
-  // 设置 Quill 字体选项
+  // ----- 自定义字体（带友好显示名称） -----
   const Font = Quill.import('formats/font');
-  Font.whitelist = fontList;
+  const fontNames = {
+    'NotoSerifSC': '宋体',
+    'Roboto': 'Roboto',
+    'OpenSans': 'Open Sans'
+  };
+  // 设置允许的字体列表（键）
+  Font.whitelist = Object.keys(fontNames);
+  // 注册字体，以便下拉菜单显示友好名称
   Quill.register(Font, true);
+  // 注意：Quill 默认会显示字体名称，但我们可以通过 CSS 类名来应用
 
-  // 工具栏配置（包含字体下拉、字号、颜色、图片等）
+  // 工具栏配置（包含字体下拉）
   const toolbarOptions = [
-    [{ 'font': fontList }],                      // 字体下拉（自定义）
+    [{ 'font': Font.whitelist }],           // 字体下拉（显示 whitelist 中的字体）
     [{ 'size': ['small', false, 'large', 'huge'] }],
     ['bold', 'italic', 'underline', 'strike'],
     [{ 'color': [] }, { 'background': [] }],
@@ -33,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadPosts();
 });
 
-// ---- 以下所有函数保持不变，但为了完整性再次贴出 ----
+// ---- 以下函数保持不变 ----
 async function loadPosts() {
   const res = await fetch('/api/posts?status=all');
   if (!res.ok) return alert('加载失败');
