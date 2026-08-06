@@ -1,0 +1,7 @@
+name = "my-blog"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "blog-db"          # 请改成您在 D1 中创建的数据库名称
+database_id = "你的数据库ID"        # 在 Cloudflare Dashboard 中获取
