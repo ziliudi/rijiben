@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>文章详情</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="banner" style="border-bottom: none; padding-bottom: 10px;">
+    <a href="/" style="text-decoration:none;color:#222;">← 返回首页</a>
+  </div>
+
+  <main id="post-content"></main>
+
+  <footer>Copyright © 2006-2026 老土日记版权所有</footer>
+
+  <script>
+    const slug = new URLSearchParams(window.location.search).get('slug');
+    if (!slug) {
+      document.getElementById('post-content').innerHTML = '<p>文章不存在</p>';
+    } else {
+      fetch(`/api/posts/${slug}`)
+        .then(res => {
+          if (!res.ok) throw new Error('未找到文章');
+          return res.json();
+        })
+        .then(post => {
+          document.getElementById('post-content').innerHTML = `
+            <h1>${post.title}</h1>
+            <div class="meta">发布时间：${new Date(post.created_at).toLocaleString('zh-CN')}</div>
+            ${post.category ? `<div class="meta">分类：${post.category}</div>` : ''}
+            ${post.tags ? `<div class="meta">标签：${JSON.parse(post.tags).join('、')}</div>` : ''}
+            <div class="body">${post.content}</div>
+          `;
+        })
+        .catch(err => {
+          document.getElementById('post-content').innerHTML = `<p>${err.message}</p>`;
+        });
+    }
+  </script>
+</body>
+</html>
