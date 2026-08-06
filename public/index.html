@@ -73,10 +73,15 @@
       <div class="banner">
         <h1>老土日记</h1>
         <p>偶尔愤怒，常常麻木</p>
-        <div class="links">
-          <a href="#">YOUTUBE</a>
-          <a href="#">PODCAST</a>
-        </div>
+        <!-- 顶部菜单（五个菜单项） -->
+        <nav class="menu">
+          <a href="/?page=1">全部</a>
+          <a href="/?category=诗歌">诗歌</a>
+          <a href="/?sort=latest">最新</a>
+          <!-- 以下两个链接可自定义 -->
+          <a href="https://twitter.com/你的账号">推特</a>
+          <a href="https://instagram.com/你的账号">INS</a>
+        </nav>
       </div>
 
       <div id="post-list"></div>
@@ -127,7 +132,7 @@
     fetch('/api/posts?status=all')
       .then(res => res.json())
       .then(data => {
-        const posts = data.posts || data; // 兼容分页返回
+        const posts = data.posts || data;
         const archive = {};
         (posts || []).forEach(p => {
           const date = new Date(p.created_at);
@@ -162,7 +167,7 @@
 
     // ---- 分页功能 ----
     let currentPage = 1;
-    const limit = 10; // 每页文章数
+    const limit = 10;
     let totalPages = 1;
 
     function loadPage(page) {
@@ -174,7 +179,6 @@
           renderPosts(data.posts);
           updatePagination(page, totalPages);
           currentPage = page;
-          // 更新 URL 参数（便于分享）
           const url = new URL(window.location);
           url.searchParams.set('page', page);
           window.history.replaceState({}, '', url);
@@ -205,7 +209,6 @@
       document.getElementById('prev-page').disabled = (page <= 1);
       document.getElementById('next-page').disabled = (page >= total);
 
-      // 生成页码数字（最多显示5个）
       let start = Math.max(1, page - 2);
       let end = Math.min(total, page + 2);
       if (end - start < 4) {
@@ -224,7 +227,6 @@
     function goToPage(page) {
       if (page < 1 || page > totalPages) return;
       loadPage(page);
-      // 滚动到文章列表顶部
       document.querySelector('.main-content').scrollIntoView({ behavior: 'smooth' });
     }
 
