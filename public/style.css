@@ -1,4 +1,4 @@
-/* ===== 原有样式（保留） ===== */
+/* ===== 基础样式 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: "Noto Serif SC", "Georgia", serif;
@@ -10,6 +10,7 @@ body {
   line-height: 1.6;
 }
 
+/* ===== Banner ===== */
 .banner {
   text-align: center;
   padding: 30px 20px 20px;
@@ -18,15 +19,29 @@ body {
 }
 .banner h1 { font-size: 2.8rem; font-weight: 700; letter-spacing: 2px; }
 .banner p { font-size: 1.1rem; color: #666; margin-top: 6px; }
-.banner .links { margin-top: 12px; }
-.banner .links a {
-  margin: 0 12px;
+
+/* 顶部菜单（五个菜单项） */
+.banner .menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 20px;
+  margin-top: 12px;
+}
+.banner .menu a {
   text-decoration: none;
   color: #8b6b4a;
   font-weight: bold;
   font-size: 0.95rem;
+  padding: 4px 0;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+.banner .menu a:hover {
+  border-bottom-color: #8b6b4a;
 }
 
+/* ===== 文章列表 ===== */
 #post-list { padding: 0 4px; }
 article {
   margin-bottom: 38px;
@@ -41,12 +56,14 @@ article .summary { font-size: 1rem; color: #444; margin-bottom: 6px; line-height
 article a[href*="全文"] { color: #8b6b4a; text-decoration: none; font-weight: 500; }
 article a[href*="全文"]:hover { text-decoration: underline; }
 
+/* ===== 文章详情页 ===== */
 #post-content { padding: 10px 4px 30px; }
 #post-content h1 { font-size: 2.2rem; margin-bottom: 6px; }
 #post-content .meta { color: #888; font-size: 0.9rem; margin-bottom: 4px; }
 #post-content .body { font-size: 1.05rem; line-height: 1.9; margin-top: 20px; }
 #post-content .body img { max-width: 100%; height: auto; border-radius: 4px; }
 
+/* ===== 后台管理表单 ===== */
 .admin-form {
   max-width: 400px;
   margin: 60px auto;
@@ -78,6 +95,7 @@ article a[href*="全文"]:hover { text-decoration: underline; }
 .admin-form button:hover { background: #1e2b38; }
 .admin-form .error { color: #c0392b; text-align: center; margin-top: 10px; }
 
+/* ===== 后台管理界面 ===== */
 .container { max-width: 1100px; margin: 20px auto; padding: 0 20px; }
 .toolbar { margin-bottom: 20px; }
 .toolbar button { margin-right: 10px; }
@@ -129,6 +147,7 @@ article a[href*="全文"]:hover { text-decoration: underline; }
 #editor { height: 300px; }
 .editor-actions { margin-top: 16px; }
 
+/* ===== 页脚 ===== */
 footer {
   margin-top: 40px;
   padding: 20px 0 30px;
@@ -138,9 +157,7 @@ footer {
   font-size: 0.85rem;
 }
 
-/* ===== 新增：侧边栏和分页样式 ===== */
-
-/* 顶部导航（移动端） */
+/* ===== 侧边栏（抽屉） ===== */
 .top-header {
   position: fixed;
   top: 0;
@@ -180,7 +197,6 @@ footer {
   color: #2c3e50;
 }
 
-/* 遮罩层 */
 .drawer-overlay {
   position: fixed;
   top: 0;
@@ -198,7 +214,6 @@ footer {
   pointer-events: auto;
 }
 
-/* 抽屉侧边栏 */
 .drawer {
   position: fixed;
   top: 0;
@@ -233,7 +248,6 @@ footer {
   margin: 4px 0 0;
 }
 
-/* 小工具 */
 .widget {
   margin-bottom: 16px;
   border-bottom: 1px dashed #e0d6c8;
@@ -299,7 +313,7 @@ footer {
   cursor: default;
 }
 
-/* 两栏布局（桌面） */
+/* ===== 两栏布局（桌面） ===== */
 .blog-wrapper {
   display: flex;
   max-width: 1200px;
@@ -312,7 +326,7 @@ footer {
   min-width: 0;
 }
 
-/* 页码导航 */
+/* ===== 页码导航 ===== */
 .pagination {
   display: flex;
   justify-content: center;
@@ -360,7 +374,42 @@ footer {
   color: #999;
 }
 
-/* 响应式：桌面端隐藏移动导航，侧边栏固定 */
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  body {
+    padding-top: 52px !important;
+  }
+  .banner {
+    margin-top: 0;
+  }
+  .drawer {
+    width: 280px;
+  }
+  .blog-wrapper {
+    flex-direction: column;
+    padding: 0 12px;
+  }
+  .drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    transform: translateX(-105%);
+    width: 280px;
+    border-radius: 0;
+    border: none;
+  }
+  .drawer.open {
+    transform: translateX(0);
+  }
+  .banner .menu {
+    gap: 6px 12px;
+  }
+  .banner .menu a {
+    font-size: 0.8rem;
+  }
+}
+
 @media (min-width: 769px) {
   .hamburger {
     display: none;
@@ -399,35 +448,5 @@ footer {
   .main-content {
     flex: 1;
     min-width: 0;
-  }
-}
-
-/* 移动端 body 上边距 */
-@media (max-width: 768px) {
-  body {
-    padding-top: 52px !important;
-  }
-  .banner {
-    margin-top: 0;
-  }
-  .drawer {
-    width: 280px;
-  }
-  .blog-wrapper {
-    flex-direction: column;
-    padding: 0 12px;
-  }
-  .drawer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    transform: translateX(-105%);
-    width: 280px;
-    border-radius: 0;
-    border: none;
-  }
-  .drawer.open {
-    transform: translateX(0);
   }
 }
