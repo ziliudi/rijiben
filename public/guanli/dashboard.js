@@ -2,10 +2,38 @@ let quill = null;
 let currentPostId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  quill = new Quill('#editor', { theme: 'snow', placeholder: '撰写文章内容...' });
+  // 自定义字体配置（名称必须与 CSS 类中的后缀一致）
+  const fontList = ['NotoSerifSC', 'Roboto', 'OpenSans'];
+  // 设置 Quill 字体选项
+  const Font = Quill.import('formats/font');
+  Font.whitelist = fontList;
+  Quill.register(Font, true);
+
+  // 工具栏配置（包含字体下拉、字号、颜色、图片等）
+  const toolbarOptions = [
+    [{ 'font': fontList }],                      // 字体下拉（自定义）
+    [{ 'size': ['small', false, 'large', 'huge'] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'align': [] }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['blockquote', 'code-block'],
+    ['link', 'image', 'video'],
+    ['clean']
+  ];
+
+  quill = new Quill('#editor', {
+    theme: 'snow',
+    modules: {
+      toolbar: toolbarOptions
+    },
+    placeholder: '撰写文章内容...'
+  });
+
   loadPosts();
 });
 
+// ---- 以下所有函数保持不变，但为了完整性再次贴出 ----
 async function loadPosts() {
   const res = await fetch('/api/posts?status=all');
   if (!res.ok) return alert('加载失败');
@@ -60,7 +88,7 @@ async function editPost(id) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   document.getElementById('editCreatedAt').value = local;
   document.getElementById('editStatus').value = post.status;
-  quill.setContents(quill.clipboard.convert(post.content));
+  quill.clipboard.dangerouslyPasteHTML(post.content);
   document.getElementById('editorArea').style.display = 'block';
 }
 
