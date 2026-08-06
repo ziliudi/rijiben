@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>老土日记</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="banner">
+    <h1>老土日记</h1>
+    <p>偶尔愤怒，常常麻木</p>
+    <div class="links">
+      <a href="#">YOUTUBE</a>
+      <a href="#">PODCAST</a>
+    </div>
+  </div>
+
+  <main id="post-list"></main>
+
+  <footer>Copyright © 2006-2026 老土日记版权所有</footer>
+
+  <script>
+    fetch('/api/posts?status=published')
+      .then(res => res.json())
+      .then(posts => {
+        const container = document.getElementById('post-list');
+        if (!posts.length) {
+          container.innerHTML = '<p style="text-align:center;color:#999;">暂无文章</p>';
+          return;
+        }
+        container.innerHTML = posts.map(post => `
+          <article>
+            <h2><a href="/post.html?slug=${post.slug}">${post.title}</a></h2>
+            <div class="date">${new Date(post.created_at).toLocaleDateString('zh-CN')}</div>
+            <div class="summary">${post.subtitle || ''}</div>
+            <a href="/post.html?slug=${post.slug}">全文 »</a>
+          </article>
+        `).join('');
+      })
+      .catch(err => console.error(err));
+  </script>
+</body>
+</html>
