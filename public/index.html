@@ -7,38 +7,231 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <div class="banner">
-    <h1>老土日记</h1>
-    <p>偶尔愤怒，常常麻木</p>
-    <div class="links">
-      <a href="#">YOUTUBE</a>
-      <a href="#">PODCAST</a>
+  <!-- 顶部导航（移动端显示三条杠） -->
+  <header class="top-header">
+    <div class="hamburger" onclick="toggleDrawer()">
+      <span></span>
+      <span></span>
+      <span></span>
     </div>
+    <span class="header-title">老土日记</span>
+  </header>
+
+  <!-- 遮罩层（移动端抽屉背景） -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+  <!-- 左侧抽屉侧边栏 -->
+  <aside class="drawer" id="drawer">
+    <div class="drawer-inner">
+      <div class="drawer-brand">
+        <h1>老土日记</h1>
+        <p>偶尔愤怒，常常麻木</p>
+      </div>
+
+      <!-- 链接模块 -->
+      <div class="widget">
+        <div class="widget-header" onclick="toggleWidget('links')">
+          <span>🔗 链接</span>
+          <span class="widget-arrow" id="linksArrow">▼</span>
+        </div>
+        <div class="widget-body" id="linksBody">
+          <ul>
+            <li><a href="#">YOUTUBE</a></li>
+            <li><a href="#">PODCAST</a></li>
+            <!-- 你可以在这里增加更多链接 -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- 归档模块 -->
+      <div class="widget">
+        <div class="widget-header" onclick="toggleWidget('archive')">
+          <span>📂 存档</span>
+          <span class="widget-arrow" id="archiveArrow">▼</span>
+        </div>
+        <div class="widget-body" id="archiveBody">
+          <ul id="archiveList"></ul>
+        </div>
+      </div>
+
+      <!-- 标签模块 -->
+      <div class="widget">
+        <div class="widget-header" onclick="toggleWidget('tags')">
+          <span>🏷️ 标签</span>
+          <span class="widget-arrow" id="tagsArrow">▼</span>
+        </div>
+        <div class="widget-body" id="tagsBody">
+          <div id="tagCloud" class="tag-cloud"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <div class="blog-wrapper">
+    <main class="main-content">
+      <div class="banner">
+        <h1>老土日记</h1>
+        <p>偶尔愤怒，常常麻木</p>
+        <div class="links">
+          <a href="#">YOUTUBE</a>
+          <a href="#">PODCAST</a>
+        </div>
+      </div>
+
+      <div id="post-list"></div>
+
+      <!-- 页码导航 -->
+      <div id="pagination-container" class="pagination">
+        <button id="prev-page" onclick="goToPage(currentPage - 1)" disabled>上一页</button>
+        <span id="page-numbers"></span>
+        <button id="next-page" onclick="goToPage(currentPage + 1)">下一页</button>
+      </div>
+
+      <footer>Copyright © 2006-<span id="current-year"></span> 老土日记版权所有</footer>
+    </main>
   </div>
 
-  <main id="post-list"></main>
-
-  <footer>Copyright © 2006-2026 老土日记版权所有</footer>
-
   <script>
-    fetch('/api/posts?status=published')
+    // ---- 页脚年份自动更新 ----
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+
+    // ---- 侧边栏抽屉控制 ----
+    function toggleDrawer() {
+      const drawer = document.getElementById('drawer');
+      const overlay = document.getElementById('drawerOverlay');
+      const isOpen = drawer.classList.contains('open');
+      if (isOpen) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('show');
+      } else {
+        drawer.classList.add('open');
+        overlay.classList.add('show');
+      }
+    }
+    function closeDrawer() {
+      document.getElementById('drawer').classList.remove('open');
+      document.getElementById('drawerOverlay').classList.remove('show');
+    }
+
+    // ---- 侧边栏模块折叠 ----
+    function toggleWidget(name) {
+      const body = document.getElementById(name + 'Body');
+      const arrow = document.getElementById(name + 'Arrow');
+      const isHidden = body.style.display === 'none';
+      body.style.display = isHidden ? 'block' : 'none';
+      arrow.textContent = isHidden ? '▼' : '▶';
+    }
+
+    // ---- 加载归档 ----
+    fetch('/api/posts?status=all')
       .then(res => res.json())
-      .then(posts => {
-        const container = document.getElementById('post-list');
-        if (!posts.length) {
-          container.innerHTML = '<p style="text-align:center;color:#999;">暂无文章</p>';
-          return;
-        }
-        container.innerHTML = posts.map(post => `
-          <article>
-            <h2><a href="/post.html?slug=${post.slug}">${post.title}</a></h2>
-            <div class="date">${new Date(post.created_at).toLocaleDateString('zh-CN')}</div>
-            <div class="summary">${post.subtitle || ''}</div>
-            <a href="/post.html?slug=${post.slug}">全文 »</a>
-          </article>
+      .then(data => {
+        const posts = data.posts || data; // 兼容分页返回
+        const archive = {};
+        (posts || []).forEach(p => {
+          const date = new Date(p.created_at);
+          const key = date.getFullYear() + '年' + (date.getMonth() + 1) + '月';
+          if (!archive[key]) archive[key] = [];
+          archive[key].push(p);
+        });
+        const list = document.getElementById('archiveList');
+        list.innerHTML = Object.keys(archive).sort().reverse().map(key => `
+          <li><span class="archive-toggle">▶</span> ${key} (${archive[key].length})</li>
         `).join('');
-      })
-      .catch(err => console.error(err));
+      });
+
+    // ---- 加载标签 ----
+    fetch('/api/posts?status=all')
+      .then(res => res.json())
+      .then(data => {
+        const posts = data.posts || data;
+        const tags = {};
+        (posts || []).forEach(p => {
+          if (p.tags) {
+            JSON.parse(p.tags).forEach(tag => {
+              tags[tag] = (tags[tag] || 0) + 1;
+            });
+          }
+        });
+        const container = document.getElementById('tagCloud');
+        container.innerHTML = Object.keys(tags).sort().map(tag => `
+          <span class="tag">${tag} (${tags[tag]})</span>
+        `).join(' ');
+      });
+
+    // ---- 分页功能 ----
+    let currentPage = 1;
+    const limit = 10; // 每页文章数
+    let totalPages = 1;
+
+    function loadPage(page) {
+      if (page < 1) return;
+      fetch(`/api/posts?status=published&page=${page}&limit=${limit}`)
+        .then(res => res.json())
+        .then(data => {
+          totalPages = Math.ceil(data.total / limit);
+          renderPosts(data.posts);
+          updatePagination(page, totalPages);
+          currentPage = page;
+          // 更新 URL 参数（便于分享）
+          const url = new URL(window.location);
+          url.searchParams.set('page', page);
+          window.history.replaceState({}, '', url);
+        })
+        .catch(err => {
+          console.error(err);
+          alert('加载失败');
+        });
+    }
+
+    function renderPosts(posts) {
+      const container = document.getElementById('post-list');
+      if (!posts.length) {
+        container.innerHTML = '<p style="text-align:center;color:#999;">暂无文章</p>';
+        return;
+      }
+      container.innerHTML = posts.map(post => `
+        <article>
+          <h2><a href="/post.html?slug=${post.slug}">${post.title}</a></h2>
+          <div class="date">${new Date(post.created_at).toLocaleDateString('zh-CN')}</div>
+          <div class="summary">${post.subtitle || ''}</div>
+          <a href="/post.html?slug=${post.slug}">全文 »</a>
+        </article>
+      `).join('');
+    }
+
+    function updatePagination(page, total) {
+      document.getElementById('prev-page').disabled = (page <= 1);
+      document.getElementById('next-page').disabled = (page >= total);
+
+      // 生成页码数字（最多显示5个）
+      let start = Math.max(1, page - 2);
+      let end = Math.min(total, page + 2);
+      if (end - start < 4) {
+        if (start > 1) start = Math.max(1, end - 4);
+        if (end < total) end = Math.min(total, start + 4);
+      }
+      let html = '';
+      if (start > 1) html += `<span class="page-dots">...</span>`;
+      for (let i = start; i <= end; i++) {
+        html += `<span class="page-number ${i === page ? 'active' : ''}" onclick="goToPage(${i})">${i}</span>`;
+      }
+      if (end < total) html += `<span class="page-dots">...</span>`;
+      document.getElementById('page-numbers').innerHTML = html;
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      loadPage(page);
+      // 滚动到文章列表顶部
+      document.querySelector('.main-content').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 初始化：从 URL 参数读取页码
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialPage = parseInt(urlParams.get('page')) || 1;
+    loadPage(initialPage);
   </script>
 </body>
 </html>
