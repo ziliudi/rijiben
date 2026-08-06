@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <!-- 顶部导航（移动端显示三条杠） -->
+  <!-- 顶部导航（移动端） -->
   <header class="top-header">
     <div class="hamburger" onclick="toggleDrawer()">
       <span></span>
@@ -17,18 +17,16 @@
     <span class="header-title">老土日记</span>
   </header>
 
-  <!-- 遮罩层（移动端抽屉背景） -->
+  <!-- 遮罩层 -->
   <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 
-  <!-- 左侧抽屉侧边栏 -->
+  <!-- 侧边栏 -->
   <aside class="drawer" id="drawer">
     <div class="drawer-inner">
       <div class="drawer-brand">
         <h1>老土日记</h1>
         <p>偶尔愤怒，常常麻木</p>
       </div>
-
-      <!-- 链接模块 -->
       <div class="widget">
         <div class="widget-header" onclick="toggleWidget('links')">
           <span>🔗 链接</span>
@@ -38,12 +36,9 @@
           <ul>
             <li><a href="#">YOUTUBE</a></li>
             <li><a href="#">PODCAST</a></li>
-            <!-- 你可以在这里增加更多链接 -->
           </ul>
         </div>
       </div>
-
-      <!-- 归档模块 -->
       <div class="widget">
         <div class="widget-header" onclick="toggleWidget('archive')">
           <span>📂 存档</span>
@@ -53,8 +48,6 @@
           <ul id="archiveList"></ul>
         </div>
       </div>
-
-      <!-- 标签模块 -->
       <div class="widget">
         <div class="widget-header" onclick="toggleWidget('tags')">
           <span>🏷️ 标签</span>
@@ -67,18 +60,17 @@
     </div>
   </aside>
 
-  <!-- 主内容区 -->
+  <!-- 主内容 -->
   <div class="blog-wrapper">
     <main class="main-content">
       <div class="banner">
         <h1>老土日记</h1>
         <p>偶尔愤怒，常常麻木</p>
-        <!-- 顶部菜单（五个菜单项） -->
+        <!-- 顶部菜单 -->
         <nav class="menu">
-          <a href="/?page=1">全部</a>
-          <a href="/?category=诗歌">诗歌</a>
-          <a href="/?sort=latest">最新</a>
-          <!-- 以下两个链接可自定义 -->
+          <a href="#" onclick="switchView('all'); return false;">全部</a>
+          <a href="#" onclick="switchView('poetry'); return false;">诗歌</a>
+          <a href="#" onclick="switchView('latest'); return false;">最新</a>
           <a href="https://twitter.com/你的账号">推特</a>
           <a href="https://instagram.com/你的账号">INS</a>
         </nav>
@@ -86,8 +78,8 @@
 
       <div id="post-list"></div>
 
-      <!-- 页码导航 -->
-      <div id="pagination-container" class="pagination">
+      <!-- 分页导航（仅在“全部”和“诗歌”模式下显示） -->
+      <div id="pagination-container" class="pagination" style="display:none;">
         <button id="prev-page" onclick="goToPage(currentPage - 1)" disabled>上一页</button>
         <span id="page-numbers"></span>
         <button id="next-page" onclick="goToPage(currentPage + 1)">下一页</button>
@@ -98,28 +90,23 @@
   </div>
 
   <script>
-    // ---- 页脚年份自动更新 ----
+    // ---- 页脚年份 ----
     document.getElementById('current-year').textContent = new Date().getFullYear();
 
-    // ---- 侧边栏抽屉控制 ----
+    // ---- 侧边栏控制 ----
     function toggleDrawer() {
       const drawer = document.getElementById('drawer');
       const overlay = document.getElementById('drawerOverlay');
       const isOpen = drawer.classList.contains('open');
-      if (isOpen) {
-        drawer.classList.remove('open');
-        overlay.classList.remove('show');
-      } else {
-        drawer.classList.add('open');
-        overlay.classList.add('show');
-      }
+      if (isOpen) { drawer.classList.remove('open'); overlay.classList.remove('show'); }
+      else { drawer.classList.add('open'); overlay.classList.add('show'); }
     }
     function closeDrawer() {
       document.getElementById('drawer').classList.remove('open');
       document.getElementById('drawerOverlay').classList.remove('show');
     }
 
-    // ---- 侧边栏模块折叠 ----
+    // ---- 侧边栏折叠 ----
     function toggleWidget(name) {
       const body = document.getElementById(name + 'Body');
       const arrow = document.getElementById(name + 'Arrow');
@@ -128,13 +115,13 @@
       arrow.textContent = isHidden ? '▼' : '▶';
     }
 
-    // ---- 加载归档 ----
-    fetch('/api/posts?status=all')
+    // ---- 加载归档（只取已发布文章，用于统计） ----
+    fetch('/api/posts?status=published&all=true')
       .then(res => res.json())
       .then(data => {
-        const posts = data.posts || data;
+        const posts = data.posts || [];
         const archive = {};
-        (posts || []).forEach(p => {
+        posts.forEach(p => {
           const date = new Date(p.created_at);
           const key = date.getFullYear() + '年' + (date.getMonth() + 1) + '月';
           if (!archive[key]) archive[key] = [];
@@ -147,12 +134,12 @@
       });
 
     // ---- 加载标签 ----
-    fetch('/api/posts?status=all')
+    fetch('/api/posts?status=published&all=true')
       .then(res => res.json())
       .then(data => {
-        const posts = data.posts || data;
+        const posts = data.posts || [];
         const tags = {};
-        (posts || []).forEach(p => {
+        posts.forEach(p => {
           if (p.tags) {
             JSON.parse(p.tags).forEach(tag => {
               tags[tag] = (tags[tag] || 0) + 1;
@@ -165,23 +152,54 @@
         `).join(' ');
       });
 
-    // ---- 分页功能 ----
+    // ---- 视图切换 ----
+    let currentView = 'all'; // 'all' | 'poetry' | 'latest'
     let currentPage = 1;
-    const limit = 10;
     let totalPages = 1;
+    const limit = 10;
 
+    function switchView(view) {
+      currentView = view;
+      currentPage = 1;
+      // 高亮菜单（简单）
+      document.querySelectorAll('.menu a').forEach(a => a.style.fontWeight = 'normal');
+      const menuMap = { 'all': 0, 'poetry': 1, 'latest': 2 };
+      const idx = menuMap[view] !== undefined ? menuMap[view] : 0;
+      const menuLinks = document.querySelectorAll('.menu a');
+      if (menuLinks[idx]) menuLinks[idx].style.fontWeight = 'bold';
+      // 重新加载
+      loadPage(1);
+    }
+
+    // ---- 加载数据 ----
     function loadPage(page) {
       if (page < 1) return;
-      fetch(`/api/posts?status=published&page=${page}&limit=${limit}`)
+      let url = `/api/posts?status=published&page=${page}&limit=${limit}`;
+      if (currentView === 'poetry') {
+        url += '&category=诗歌';
+      } else if (currentView === 'latest') {
+        // 最新模式：不分页，只取最近10篇
+        url = `/api/posts?status=published&latest=true&limit=10`;
+      }
+      fetch(url)
         .then(res => res.json())
         .then(data => {
-          totalPages = Math.ceil(data.total / limit);
-          renderPosts(data.posts);
-          updatePagination(page, totalPages);
+          if (currentView === 'latest') {
+            // 最新模式返回数据格式不同（没有分页信息）
+            renderPosts(data.posts || []);
+            document.getElementById('pagination-container').style.display = 'none';
+          } else {
+            totalPages = Math.ceil(data.total / limit);
+            renderPosts(data.posts || []);
+            updatePagination(page, totalPages);
+            document.getElementById('pagination-container').style.display = 'flex';
+          }
           currentPage = page;
-          const url = new URL(window.location);
-          url.searchParams.set('page', page);
-          window.history.replaceState({}, '', url);
+          // 更新URL参数（便于分享）
+          const urlObj = new URL(window.location);
+          urlObj.searchParams.set('view', currentView);
+          urlObj.searchParams.set('page', page);
+          window.history.replaceState({}, '', urlObj);
         })
         .catch(err => {
           console.error(err);
@@ -230,10 +248,18 @@
       document.querySelector('.main-content').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // 初始化：从 URL 参数读取页码
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialPage = parseInt(urlParams.get('page')) || 1;
-    loadPage(initialPage);
+    // ---- 初始化 ----
+    // 从 URL 参数读取视图和页码
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view') || 'all';
+    const page = parseInt(params.get('page')) || 1;
+    switchView(view);
+    // 如果视图是 latest，忽略页码
+    if (view === 'latest') {
+      loadPage(1);
+    } else {
+      loadPage(page);
+    }
   </script>
 </body>
 </html>
