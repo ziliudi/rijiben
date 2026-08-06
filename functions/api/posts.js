@@ -7,21 +7,47 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
+  // ========== GET: 获取文章列表（支持分页） ==========
   if (request.method === 'GET') {
     const status = url.searchParams.get('status') || 'published';
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const limit = parseInt(url.searchParams.get('limit')) || 10;
+    const offset = (page - 1) * limit;
+
+    // 查询文章
     let sql = 'SELECT * FROM posts';
     const params = [];
     if (status !== 'all') {
       sql += ' WHERE status = ?';
       params.push(status);
     }
-    sql += ' ORDER BY created_at DESC';
+    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
     const { results } = await env.DB.prepare(sql).bind(...params).all();
-    return new Response(JSON.stringify(results), {
+
+    // 查询总数
+    let countSql = 'SELECT COUNT(*) as total FROM posts';
+    const countParams = [];
+    if (status !== 'all') {
+      countSql += ' WHERE status = ?';
+      countParams.push(status);
+    }
+    const { results: countResult } = await env.DB.prepare(countSql).bind(...countParams).all();
+    const total = countResult[0]?.total || 0;
+
+    return new Response(JSON.stringify({
+      posts: results,
+      total,
+      page,
+      limit,
+      hasMore: offset + results.length < total
+    }), {
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
+  // ========== POST: 新建文章 ==========
   if (request.method === 'POST') {
     const { title, subtitle, slug, content, category, tags, status, created_at } = await request.json();
     const createdAt = created_at || new Date().toISOString();
