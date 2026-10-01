@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>博客后台管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+  <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-100 h-screen flex">
+  <!-- 登录界面 -->
+  <div id="login-view" class="m-auto bg-white p-8 rounded-xl shadow-md w-96 hidden">
+    <h2 class="text-2xl font-bold mb-6 text-center">管理员登录</h2>
+    <input type="password" id="password" placeholder="请输入管理密码" class="w-full border p-2 rounded mb-4">
+    <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">登录</button>
+    <p id="login-error" class="text-red-500 mt-2 text-sm hidden">密码错误！</p>
+  </div>
+
+  <!-- 后台主界面 -->
+  <div id="main-view" class="flex w-full hidden">
+    <!-- 侧边栏 -->
+    <div class="w-64 bg-white border-r h-full flex flex-col">
+      <div class="p-4 border-b font-bold text-lg">老土日记后台</div>
+      <div class="p-4 flex-1">
+        <button onclick="showEditor()" class="w-full bg-blue-500 text-white p-2 rounded mb-4">+ 写新日记</button>
+        <div class="text-sm text-gray-500">提示：点击左侧列表编辑，右侧修改内容</div>
+      </div>
+      <div class="p-4 border-t">
+        <button onclick="logout()" class="text-sm text-red-500">退出登录</button>
+      </div>
+    </div>
+    
+    <!-- 编辑区 -->
+    <div id="editor-area" class="flex-1 p-8 overflow-y-auto hidden">
+      <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-sm">
+        <h2 class="text-xl font-bold mb-4">编辑文章</h2>
+        <input type="text" id="title" placeholder="文章标题" class="w-full text-2xl font-bold border-b p-2 mb-4 outline-none">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="text-sm text-gray-500">自定义链接 (Slug)</label>
+            <input type="text" id="slug" placeholder="例如: tou-xian" class="w-full border p-2 rounded outline-none">
+          </div>
+          <div>
+            <label class="text-sm text-gray-500">发表日期</label>
+            <input type="date" id="date" class="w-full border p-2 rounded outline-none">
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="text-sm text-gray-500">标签 (用逗号分隔，例如: 诗, 大理)</label>
+          <input type="text" id="tags" placeholder="诗, 大理" class="w-full border p-2 rounded outline-none">
+        </div>
+        <textarea id="content" class="w-full border p-2 rounded h-96 font-mono text-sm outline-none"></textarea>
+        <div class="mt-4 flex justify-end gap-2">
+          <button onclick="savePost()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">保存并发布</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let easyMDE;
+    
+    // 初始化 Markdown 编辑器
+    window.onload = async () => {
+      easyMDE = new EasyMDE({ element: document.getElementById('content') });
+      // 检查是否已登录（尝试请求受保护的API）
+      const res = await fetch('/api/admin/posts', { method: 'POST', body: JSON.stringify({}) });
+      if (res.status === 401) {
+        document.getElementById('login-view').classList.remove('hidden');
+      } else {
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('main-view').classList.remove('hidden');
+        loadPosts();
+      }
+    };
+
+    async function login() {
+      const password = document.getElementById('password').value;
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      if (res.ok) {
+        location.reload();
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      document.cookie = 'auth_token=; Max-Age=-1; path=/';
+      location.reload();
+    }
+
+    function showEditor() {
+      document.getElementById('editor-area').classList.remove('hidden');
+      document.getElementById('title').value = '';
+      document.getElementById('slug').value = '';
+      document.getElementById('tags').value = '';
+      easyMDE.value('');
+    }
+
+    async function savePost() {
+      const data = {
+        title: document.getElementById('title').value,
+        slug: document.getElementById('slug').value,
+        created_at: document.getElementById('date').value,
+        tags: document.getElementById('tags').value.split(',').map(t => t.trim()),
+        content: easyMDE.value()
+      };
+      const res = await fetch('/api/admin/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) alert('保存成功！去首页看看吧。');
+      else alert('保存失败，请检查登录状态或网络。');
+    }
+
+    async function loadPosts() {
+      // 你可以在这里实现一个列表加载，点击回填到表单，这里省略以保持代码精炼
+      console.log("加载列表逻辑可以补充在这里");
+    }
+  </script>
+</body>
+</html>
