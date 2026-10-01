@@ -1,17 +1,17 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
 export async function getStaticPaths() {
-  // 构建时从API拉取所有文章，生成静态页面
-  const res = await fetch('https://你的域名/api/posts');
-  const posts = await res.json();
-  return posts.map(post => ({ params: { slug: post.slug }, props: { post } }));
+  // 暂时返回空数组，让构建通过。后续我们通过后台发布文章后，再来完善这里。
+  return [];
 }
+
 const { post } = Astro.props;
 ---
-<BaseLayout title={post.title}>
-  <article class="bg-white p-6 rounded-xl shadow-sm">
-    <h1 class="text-2xl font-bold mb-2">{post.title}</h1>
-    <p class="text-gray-500 text-sm mb-4">{post.created_at}</p>
-    <div class="prose max-w-none" set:html={post.content} />
+<BaseLayout title={post ? post.title : '文章'}>
+  <article class="card">
+    <h1 class="text-2xl font-bold mb-2">{post?.title}</h1>
+    <p class="text-gray-500 text-sm mb-4">{post?.created_at}</p>
+    <div class="prose max-w-none" set:html={post?.content} />
   </article>
 </BaseLayout>
